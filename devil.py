@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, Bot
+from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 import requests
 import random
@@ -13,7 +13,7 @@ import socket
 # ===========================
 # API KEYS dan Configs
 OWNER_ID = 7836468443  # Ganti dengan ID Telegram pemilik bot
-API_KEY = '8141283043:AAFnrHbK9ewqn1FBpwcrSXQdJ9yIYs0KVQY'
+API_KEY = '7566111301:AAH5tuEOowkjDr4yrYBj_2-vqq6d6tmgQyU'
 DEBUG = True
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -27,7 +27,7 @@ def start(update: Update, context: CallbackContext):
 # ===========================
 # Command: /help
 def help(update: Update, context: CallbackContext):
-    update.message.reply_text("Available commands:\n/start - Start the bot\n/vuln <url> - Check for vulnerabilities\n/iptrace <IP> - Trace IP location\n/ddos <target> - Start DDoS simulation")
+    update.message.reply_text("Available commands:\n/start - Start the bot\n/vuln <url> - Check for vulnerabilities\n/iptrace <IP> - Trace IP location\n/ddos <target> - Start DDoS simulation\n/userinfo <username> - OSINT via Telegram Username")
 
 # ===========================
 # OSINT Tools
@@ -57,6 +57,20 @@ def whois(update: Update, context: CallbackContext):
         update.message.reply_text(f"Error fetching WHOIS data: {str(e)}")
 
 # ===========================
+# OSINT via Telegram Username
+def userinfo(update: Update, context: CallbackContext):
+    if len(context.args) < 1:
+        update.message.reply_text("Usage: /userinfo <telegram_username>")
+        return
+    username = context.args[0].replace("@", "")
+    try:
+        update.message.reply_text(f"🔍 Searching Telegram username: @{username}... (Note: Limited by API)")
+        info = f"Username: @{username}\nNo public API to extract more due to Telegram privacy.\nSuggest checking via Telegram search or third-party tools."
+        update.message.reply_text(info)
+    except Exception as e:
+        update.message.reply_text(f"Error: {str(e)}")
+
+# ===========================
 # Vulnerability Scanner (SQLi & XSS)
 def vuln(update: Update, context: CallbackContext):
     if len(context.args) < 1:
@@ -71,7 +85,7 @@ def vuln(update: Update, context: CallbackContext):
         "' OR 'a'='a", 
         "' UNION SELECT NULL, username, password FROM users --"
     ]
-    
+
     sqli_results = []
     for payload in sqli_payloads:
         test_url = f"{target_url}{payload}"
@@ -88,7 +102,7 @@ def vuln(update: Update, context: CallbackContext):
         '<img src="x" onerror="alert(1)">',
         '<svg/onload=alert(1)>'
     ]
-    
+
     xss_results = []
     for payload in xss_payloads:
         test_url = f"{target_url}?q={payload}"
@@ -181,24 +195,30 @@ def web_shell_detection(update: Update, context: CallbackContext):
             update.message.reply_text(f"Error checking for {shell}: {str(e)}")
 
 # ===========================
-# Main function to start the bot
+# Main function (FIXED)
 def main():
-    updater = Updater(API_KEY)
-    dp = updater.dispatcher
+    try:
+        updater = Updater(token=API_KEY, use_context=True)
+        dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("iptrace", iptrace))
-    dp.add_handler(CommandHandler("whois", whois))
-    dp.add_handler(CommandHandler("vuln", vuln))
-    dp.add_handler(CommandHandler("ddos", ddos))
-    dp.add_handler(CommandHandler("shellfinder", shellfinder))
-    dp.add_handler(CommandHandler("stealth_logger", stealth_logger))
-    dp.add_handler(CommandHandler("auto_dump_sender", auto_dump_sender))
-    dp.add_handler(CommandHandler("web_shell_detection", web_shell_detection))
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(CommandHandler("help", help))
+        dp.add_handler(CommandHandler("iptrace", iptrace))
+        dp.add_handler(CommandHandler("whois", whois))
+        dp.add_handler(CommandHandler("vuln", vuln))
+        dp.add_handler(CommandHandler("ddos", ddos))
+        dp.add_handler(CommandHandler("shellfinder", shellfinder))
+        dp.add_handler(CommandHandler("stealth_logger", stealth_logger))
+        dp.add_handler(CommandHandler("auto_dump_sender", auto_dump_sender))
+        dp.add_handler(CommandHandler("web_shell_detection", web_shell_detection))
+        dp.add_handler(CommandHandler("userinfo", userinfo))
 
-    updater.start_polling()
-    updater.idle()
+        logging.info("Bot sedang berjalan...")
+        updater.start_polling()
+        updater.idle()
+    except Exception as e:
+        logging.error(f"Error: {str(e)}")
+        raise
 
 if __name__ == '__main__':
     main()
