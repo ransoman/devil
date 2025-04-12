@@ -27,7 +27,7 @@ def start(update: Update, context: CallbackContext):
 # ===========================
 # Command: /help
 def help(update: Update, context: CallbackContext):
-    update.message.reply_text("Available commands:\n/start - Start the bot\n/vuln <url> - Check for vulnerabilities\n/iptrace <IP> - Trace IP location\n/ddos <target> - Start DDoS simulation\n/userinfo <username> - OSINT via Telegram Username")
+    update.message.reply_text("Available commands:\n/start - Start the bot\n/vuln <url> - Check for vulnerabilities\n/iptrace <IP> - Trace IP location\n/ddos <target> - Start DDoS simulation")
 
 # ===========================
 # OSINT Tools
@@ -57,20 +57,6 @@ def whois(update: Update, context: CallbackContext):
         update.message.reply_text(f"Error fetching WHOIS data: {str(e)}")
 
 # ===========================
-# OSINT via Telegram Username
-def userinfo(update: Update, context: CallbackContext):
-    if len(context.args) < 1:
-        update.message.reply_text("Usage: /userinfo <telegram_username>")
-        return
-    username = context.args[0].replace("@", "")
-    try:
-        update.message.reply_text(f"🔍 Searching Telegram username: @{username}... (Note: Limited by API)")
-        info = f"Username: @{username}\nNo public API to extract more due to Telegram privacy.\nSuggest checking via Telegram search or third-party tools."
-        update.message.reply_text(info)
-    except Exception as e:
-        update.message.reply_text(f"Error: {str(e)}")
-
-# ===========================
 # Vulnerability Scanner (SQLi & XSS)
 def vuln(update: Update, context: CallbackContext):
     if len(context.args) < 1:
@@ -85,7 +71,7 @@ def vuln(update: Update, context: CallbackContext):
         "' OR 'a'='a", 
         "' UNION SELECT NULL, username, password FROM users --"
     ]
-
+    
     sqli_results = []
     for payload in sqli_payloads:
         test_url = f"{target_url}{payload}"
@@ -102,7 +88,7 @@ def vuln(update: Update, context: CallbackContext):
         '<img src="x" onerror="alert(1)">',
         '<svg/onload=alert(1)>'
     ]
-
+    
     xss_results = []
     for payload in xss_payloads:
         test_url = f"{target_url}?q={payload}"
@@ -197,7 +183,7 @@ def web_shell_detection(update: Update, context: CallbackContext):
 # ===========================
 # Main function to start the bot
 def main():
-    updater = Updater(API_KEY, use_context=True)
+    updater = Updater(API_KEY)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
@@ -210,7 +196,6 @@ def main():
     dp.add_handler(CommandHandler("stealth_logger", stealth_logger))
     dp.add_handler(CommandHandler("auto_dump_sender", auto_dump_sender))
     dp.add_handler(CommandHandler("web_shell_detection", web_shell_detection))
-    dp.add_handler(CommandHandler("userinfo", userinfo))
 
     updater.start_polling()
     updater.idle()
